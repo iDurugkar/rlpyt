@@ -453,11 +453,11 @@ def record_tabular_misc_stat(key, values, placement='back', group_slash=False):
         if group_slash:
             prefix += "/"
     if len(values) > 0:
-        record_tabular(prefix + "Average" + suffix, np.average(values))
-        record_tabular(prefix + "Std" + suffix, np.std(values))
-        record_tabular(prefix + "Median" + suffix, np.median(values))
-        record_tabular(prefix + "Min" + suffix, np.min(values))
-        record_tabular(prefix + "Max" + suffix, np.max(values))
+        record_tabular(prefix + "/Average" + suffix, np.average(values))
+        record_tabular(prefix + "/Std" + suffix, np.std(values))
+        record_tabular(prefix + "/Median" + suffix, np.median(values))
+        record_tabular(prefix + "/Min" + suffix, np.min(values))
+        record_tabular(prefix + "/Max" + suffix, np.max(values))
     else:
         record_tabular(prefix + "Average" + suffix, np.nan)
         record_tabular(prefix + "Std" + suffix, np.nan)
