@@ -3,7 +3,8 @@ import json
 import os
 import os.path as osp
 from contextlib import contextmanager
-from torch.utils.tensorboard.writer import SummaryWriter
+import json
+from torch.utils.tensorboard import SummaryWriter
 
 from rlpyt.utils.logging import logger
 
@@ -51,10 +52,13 @@ def logger_context(
         print(f"logger_context received log_dir outside of {LOG_DIR}: "
             f"prepending by {LOG_DIR}/local/<yyyymmdd>/")
         exp_dir = get_log_dir(log_dir)
+    tf_writer = SummaryWriter(log_dir=exp_dir)
     tabular_log_file = osp.join(exp_dir, "progress.csv")
     text_log_file = osp.join(exp_dir, "debug.log")
     params_log_file = osp.join(exp_dir, "params.json")
 
+    logger.set_tf_summary_writer(tf_writer)
+    logger.set_tf_summary_dir(exp_dir)
     logger.set_snapshot_dir(exp_dir)
     if use_summary_writer:
         logger.set_tf_summary_writer(SummaryWriter(exp_dir))

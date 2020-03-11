@@ -36,13 +36,13 @@ def build_and_train(env_id="Hopper-v3", run_ID=0, cuda_idx=None):
         algo=algo,
         agent=agent,
         sampler=sampler,
-        n_steps=1e6,
-        log_interval_steps=1e4,
+        n_steps=1e4,
+        log_interval_steps=1e3,
         affinity=dict(cuda_idx=cuda_idx),
     )
     config = dict(env_id=env_id)
     name = "sac_" + env_id
-    log_dir = "example_2"
+    log_dir = "/scratch/cluster/ishand/rlpyt/example_2"
     with logger_context(log_dir, run_ID, name, config):
         runner.train()
 

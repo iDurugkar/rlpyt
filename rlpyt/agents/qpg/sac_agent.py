@@ -7,9 +7,10 @@ from torch.nn.parallel import DistributedDataParallelCPU as DDPC
 
 from rlpyt.agents.base import BaseAgent, AgentStep
 from rlpyt.models.qpg.mlp import QofMuMlpModel, PiMlpModel
+from rlpyt.models.reward.mlp import RMlpModel
 from rlpyt.utils.quick_args import save__init__args
 from rlpyt.distributions.gaussian import Gaussian, DistInfoStd
-from rlpyt.utils.buffer import buffer_to
+from rlpyt.utils.buffer import buffer_to, torchify_buffer
 from rlpyt.utils.logging import logger
 from rlpyt.models.utils import update_state_dict
 from rlpyt.utils.collections import namedarraytuple
@@ -29,9 +30,12 @@ class SacAgent(BaseAgent):
             self,
             ModelCls=PiMlpModel,  # Pi model.
             QModelCls=QofMuMlpModel,
+            RModelCls=RMlpModel,
+            r_path=None,
             model_kwargs=None,  # Pi model.
             q_model_kwargs=None,
             v_model_kwargs=None,
+            r_model_kwargs=None,
             initial_model_state_dict=None,  # All models.
             action_squash=1.,  # Max magnitude (or None).
             pretrain_std=0.75,  # With squash 0.75 is near uniform.
@@ -39,6 +43,8 @@ class SacAgent(BaseAgent):
         """Saves input arguments; network defaults stored within."""
         if model_kwargs is None:
             model_kwargs = dict(hidden_sizes=[256, 256])
+        if r_model_kwargs is None:
+            r_model_kwargs = dict(hidden_sizes=[64, 64])
         if q_model_kwargs is None:
             q_model_kwargs = dict(hidden_sizes=[256, 256])
         if v_model_kwargs is None:
@@ -47,6 +53,7 @@ class SacAgent(BaseAgent):
             initial_model_state_dict=initial_model_state_dict)
         save__init__args(locals())
         self.min_itr_learn = 0  # Get from algo.
+        self.r_path = r_path
 
     def initialize(self, env_spaces, share_memory=False,
             global_B=1, env_ranks=None):
@@ -57,6 +64,14 @@ class SacAgent(BaseAgent):
         self.initial_model_state_dict = _initial_model_state_dict
         self.q1_model = self.QModelCls(**self.env_model_kwargs, **self.q_model_kwargs)
         self.q2_model = self.QModelCls(**self.env_model_kwargs, **self.q_model_kwargs)
+        self.r_model = self.RModelCls(**self.env_model_kwargs, **self.r_model_kwargs)
+        if self.r_path is not None:
+            self.r_model.load(self.r_path)
+        # for param_tensor in self.r_model.state_dict():
+        #     print(param_tensor, '\t', self.r_model.state_dict()[param_tensor].size())
+        # # print(self.r_model.state_dict())
+        # torch.save(self.r_model.state_dict(), '/scratch/cluster/ishand/reward/meta_params.pt')
+        # exit()
         self.target_q1_model = self.QModelCls(**self.env_model_kwargs,
             **self.q_model_kwargs)
         self.target_q2_model = self.QModelCls(**self.env_model_kwargs,
@@ -77,6 +92,7 @@ class SacAgent(BaseAgent):
         super().to_device(cuda_idx)
         self.q1_model.to(self.device)
         self.q2_model.to(self.device)
+        self.r_model.to(self.device)
         self.target_q1_model.to(self.device)
         self.target_q2_model.to(self.device)
 
@@ -95,6 +111,13 @@ class SacAgent(BaseAgent):
             observation_shape=env_spaces.observation.shape,
             action_size=env_spaces.action.shape[0],
         )
+
+    @torch.no_grad()
+    def r(self, observation, action):
+        """Compute reward for state (without grad)."""
+        model_inputs = buffer_to(torchify_buffer((observation, action)), device=self.device)
+        r = self.r_model(*model_inputs)
+        return r.cpu()
 
     def q(self, observation, prev_action, prev_reward, action):
         """Compute twin Q-values for state/observation and input action 

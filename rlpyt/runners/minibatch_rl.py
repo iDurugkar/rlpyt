@@ -2,6 +2,7 @@
 import psutil
 import time
 import torch
+import numpy as np
 import math
 from collections import deque
 
@@ -45,6 +46,7 @@ class MinibatchRlBase(BaseRunner):
         affinity = dict() if affinity is None else affinity
         save__init__args(locals())
         self.min_itr_learn = getattr(self.algo, 'min_itr_learn', 0)
+        self._avg_return = 0.
 
     def startup(self):
         """
@@ -129,6 +131,7 @@ class MinibatchRlBase(BaseRunner):
 
     def shutdown(self):
         logger.log("Training complete.")
+        logger.log("Avg Return at final eval: %f" % self._avg_return)
         self.pbar.stop()
         self.sampler.shutdown()
 
@@ -327,6 +330,10 @@ class MinibatchRlEval(MinibatchRlBase):
             eval_time = -time.time()
             traj_infos = self.sampler.evaluate_agent(itr)
             eval_time += time.time()
+            returns = []
+            for ti in traj_infos:
+                returns.append(ti.Return)
+            self._avg_return = np.mean(returns)
         else:
             traj_infos = []
             eval_time = 0.0

@@ -125,10 +125,11 @@ class SAC(RlAlgorithm):
         Allocates replay buffer using examples and with the fields in `SamplesToBuffer`
         namedarraytuple.
         """
+        example_rewards = self.agent.r(examples["observation"], examples["action"])
         example_to_buffer = SamplesToBuffer(
             observation=examples["observation"],
             action=examples["action"],
-            reward=examples["reward"],
+            reward=examples["reward"],  # example_rewards,
             done=examples["done"],
         )
         if not self.bootstrap_timelimit:
@@ -201,10 +202,11 @@ class SAC(RlAlgorithm):
     def samples_to_buffer(self, samples):
         """Defines how to add data from sampler into the replay buffer. Called
         in optimize_agent() if samples are provided to that method."""
+        sample_rewards = self.agent.r(samples.env.observation, samples.agent.action)
         samples_to_buffer = SamplesToBuffer(
             observation=samples.env.observation,
             action=samples.agent.action,
-            reward=samples.env.reward,
+            reward= samples.env.reward,  # sample_rewards, 
             done=samples.env.done,
         )
         if self.bootstrap_timelimit:

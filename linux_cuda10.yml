@@ -1,4 +1,4 @@
-name: rlpyt
+name: rlpyt-gpu
 channels:
 - pytorch
 dependencies:
