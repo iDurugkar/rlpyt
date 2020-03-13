@@ -131,6 +131,8 @@ def infill_info(info, sometimes_info):
 def make(env_id='sweeper', info_example=None, **kwargs):
     if env_id == 'sweeper':
         make = SawyerSweepEnv
+    elif env_id == 'goal':
+        make = SawyerSweepIntoGoalEnv
     else:
         make = SawyerReachPushPickPlaceEnv
     if info_example is None:
