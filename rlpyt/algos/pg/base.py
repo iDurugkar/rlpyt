@@ -36,7 +36,7 @@ class PolicyGradientAlgo(RlAlgorithm):
         self.batch_spec = batch_spec
         self.mid_batch_reset = mid_batch_reset
 
-    def process_returns(self, samples):
+    def process_returns(self, samples, intrinsic=0.):
         """
         Compute bootstrapped returns and advantages from a minibatch of
         samples.  Uses either discounted returns (if ``self.gae_lambda==1``)
@@ -45,7 +45,11 @@ class PolicyGradientAlgo(RlAlgorithm):
         normalize advantages.
         """
         reward, done, value, bv = (samples.env.reward, samples.env.done,
-            samples.agent.agent_info.value, samples.agent.bootstrap_value)
+            samples.agent.agent_info.value, samples.agent.bootstrap_value,)
+        if intrinsic > 0.:
+            obs, act = buffer_to((samples.env.observation, samples.agent.action), device=self.agent.device)
+            ireward = self.agent.r(obs,act)
+            reward += intrinsic * ireward
         done = done.type(reward.dtype)
 
         if self.gae_lambda == 1:  # GAE reduces to empirical discounted.

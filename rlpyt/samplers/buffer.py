@@ -8,7 +8,7 @@ from rlpyt.samplers.collections import (Samples, AgentSamples, AgentSamplesBsv,
     EnvSamples)
 
 
-def build_samples_buffer(agent, env, batch_spec, bootstrap_value=False,
+def build_samples_buffer(agent, env, batch_spec, bootstrap_value=False, intrinsic_reward=False,
         agent_shared=True, env_shared=True, subprocess=True, examples=None):
     """Recommended to step/reset agent and env in subprocess, so it doesn't
     affect settings in master before forking workers (e.g. torch num_threads
@@ -39,6 +39,9 @@ def build_samples_buffer(agent, env, batch_spec, bootstrap_value=False,
         bv = buffer_from_example(examples["agent_info"].value, (1, B), agent_shared)
         agent_buffer = AgentSamplesBsv(*agent_buffer, bootstrap_value=bv)
 
+    if intrinsic_rewards:
+        biv = buffer_from_example(examples["agent_info"].r_value, (1, B), agent_shared)
+        agent_buffer = AgentSamplesIr(*agent_buffer, bootstrap_r_value=biv)
     observation = buffer_from_example(examples["observation"], (T, B), env_shared)
     all_reward = buffer_from_example(examples["reward"], (T + 1, B), env_shared)
     reward = all_reward[1:]

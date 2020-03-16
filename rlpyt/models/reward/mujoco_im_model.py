@@ -7,7 +7,7 @@ from rlpyt.models.mlp import MlpModel
 from rlpyt.models.running_mean_std import RunningMeanStdModel
 
 
-class MujocoFfModel(torch.nn.Module):
+class RewardFfModel(torch.nn.Module):
     """
     Model commonly used in Mujoco locomotion agents: an MLP which outputs
     distribution means, separate parameter for learned log_std, and separate
@@ -32,12 +32,6 @@ class MujocoFfModel(torch.nn.Module):
         input_size = int(np.prod(observation_shape)) + action_size
         hidden_sizes = hidden_sizes or [64, 64]
         self.mlp = MlpModel(
-            input_size=input_size,
-            hidden_sizes=hidden_sizes,
-            output_size=1,
-            nonlinearity=hidden_nonlinearity,
-        )
-        self.v = MlpModel(
             input_size=input_size,
             hidden_sizes=hidden_sizes,
             output_size=1,
@@ -71,10 +65,9 @@ class MujocoFfModel(torch.nn.Module):
         a_flat = action.view(T*B, -1)
         r_input = torch.cat([obs_flat, a_flat], dim=1)
         r = self.mlp(r_input).squeeze(-1)
-        v = self.v(r_input).squeeze(-1)
 
         # Restore leading dimensions: [T,B], [B], or [], as input.
-        r, v = restore_leading_dims((r, v), lead_dim, T, B)
+        r = restore_leading_dims(r, lead_dim, T, B)
 
         return r, v
 

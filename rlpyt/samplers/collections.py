@@ -10,6 +10,9 @@ AgentSamples = namedarraytuple("AgentSamples",
     ["action", "prev_action", "agent_info"])
 AgentSamplesBsv = namedarraytuple("AgentSamplesBsv",
     ["action", "prev_action", "agent_info", "bootstrap_value"])
+"""named array tuple for intrinsic reward"""
+AgentSamplesIr namedarraytuple("AgentSamplesIr",
+        ["action", "prev_action", "agent_info", "bootstrap_value", "bootstrap_r_value"])
 EnvSamples = namedarraytuple("EnvSamples",
     ["observation", "reward", "prev_reward", "done", "env_info"])
 

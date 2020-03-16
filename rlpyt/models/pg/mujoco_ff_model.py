@@ -85,3 +85,4 @@ class MujocoFfModel(torch.nn.Module):
     def update_obs_rms(self, observation):
         if self.normalize_observation:
             self.obs_rms.update(observation)
+
