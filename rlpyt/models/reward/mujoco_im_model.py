@@ -20,7 +20,7 @@ class RewardFfModel(torch.nn.Module):
             action_size,
             hidden_sizes=None,  # None for default (see below).
             hidden_nonlinearity=torch.nn.Tanh,  # Module form.
-            mu_nonlinearity=torch.nn.Tanh,  # Module form.
+            rew_nonlinearity=None,  # Module form.
             init_log_std=0.,
             normalize_observation=False,
             norm_obs_clip=10,
@@ -31,12 +31,16 @@ class RewardFfModel(torch.nn.Module):
         self._obs_ndim = len(observation_shape)
         input_size = int(np.prod(observation_shape)) + action_size
         hidden_sizes = hidden_sizes or [64, 64]
-        self.mlp = MlpModel(
+        mlp = MlpModel(
             input_size=input_size,
             hidden_sizes=hidden_sizes,
             output_size=1,
             nonlinearity=hidden_nonlinearity,
         )
+        if rew_nonlinearity is not None:
+            self.mlp = torch.nn.Sequential(mlp, rew_nonlinearity())
+        else:
+            self.mlp = mlp
         if normalize_observation:
             self.obs_rms = RunningMeanStdModel(observation_shape)
             self.norm_obs_clip = norm_obs_clip

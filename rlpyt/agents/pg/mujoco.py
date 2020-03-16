@@ -55,7 +55,7 @@ class MujocoFfRewAgent(MujocoFfAgent):
         """extends gaussian initialization to build reward function"""
         super().initialize(env_spaces, share_memory,
                 global_B=global_B, env_ranks=env_ranks)
-        self.r_model = self.RewardCls(**self.env_model_kwargs, **self.r_model_kwargs)
+        self.r_model = self.RewardCls(**self.env_model_kwargs, **self.r_model_kwargs, rew_nonlinearity=torch.nn.Tanh)
         self.rv_model = self.RewardCls(**self.env_model_kwargs, **self.r_model_kwargs)
         self.temp_model = self.ModelCls(**self.env_model_kwargs, **self.model_kwargs)
 
