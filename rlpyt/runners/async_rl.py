@@ -143,6 +143,7 @@ class AsyncRlBase(BaseRunner):
         double_buffer, examples = self.sampler.async_initialize(
             agent=self.agent,
             bootstrap_value=getattr(self.algo, "bootstrap_value", False),
+            intrinsic_reward=getattr(self.algo, "instrinsic_reward", False),
             traj_info_kwargs=self.get_traj_info_kwargs(),
             seed=self.seed,
         )

@@ -1,5 +1,6 @@
 
 import numpy as np
+import time
 
 from rlpyt.samplers.collectors import (DecorrelatingStartCollector,
     BaseEvalCollector)
@@ -22,6 +23,16 @@ class CpuResetCollector(DecorrelatingStartCollector):
 
     mid_batch_reset = True
 
+    def __init__(self, rank, envs, samples_np, batch_T, TrajInfoCls,
+            agent=None, sync=None, step_buffer_np=None, global_B=1,
+            env_ranks=None, accumulate_reward=20):
+        super().__init__(rank, envs, samples_np, batch_T, TrajInfoCls,
+            agent, sync, step_buffer_np, global_B, env_ranks)
+        self.accumulate_steps = accumulate_reward
+        self.accum_count = [0 for _ in range(len(self.envs))]
+        self.accum_r = [0. for _ in range(len(self.envs))]
+        # print(f"Gonna accumulate rewards for {accumulate_reward} steps")
+
     def collect_batch(self, agent_inputs, traj_infos, itr):
         # Numpy arrays can be written to from numpy arrays or torch tensors
         # (whereas torch tensors can only be written to from torch tensors).
@@ -35,11 +46,22 @@ class CpuResetCollector(DecorrelatingStartCollector):
         for t in range(self.batch_T):
             env_buf.observation[t] = observation
             # Agent inputs and outputs are torch tensors.
+            # time.sleep(0.02)
             act_pyt, agent_info = self.agent.step(obs_pyt, act_pyt, rew_pyt)
             action = numpify_buffer(act_pyt)
+            # print(action)
             for b, env in enumerate(self.envs):
                 # Environment inputs and outputs are numpy arrays.
                 o, r, d, env_info = env.step(action[b])
+                self.accum_r[b] += r
+                self.accum_count[b] += 1
+                if self.accum_count[b] >= self.accumulate_steps or d:
+                    # print(f"passing on rewards at step {self.accum_count[b]} and terminate is {d}")
+                    r = self.accum_r[b]
+                    self.accum_r[b] = 0.
+                    self.accum_count[b] = 0
+                else:
+                    r = 0.
                 traj_infos[b].step(observation[b], action[b], r, d, agent_info[b],
                     env_info)
                 if getattr(env_info, "traj_done", d):

@@ -5,7 +5,7 @@ import numpy as np
 from rlpyt.utils.buffer import buffer_from_example, torchify_buffer
 from rlpyt.agents.base import AgentInputs
 from rlpyt.samplers.collections import (Samples, AgentSamples, AgentSamplesBsv,
-    EnvSamples)
+    EnvSamples, AgentSamplesIr)
 
 
 def build_samples_buffer(agent, env, batch_spec, bootstrap_value=False, intrinsic_reward=False,
@@ -39,7 +39,7 @@ def build_samples_buffer(agent, env, batch_spec, bootstrap_value=False, intrinsi
         bv = buffer_from_example(examples["agent_info"].value, (1, B), agent_shared)
         agent_buffer = AgentSamplesBsv(*agent_buffer, bootstrap_value=bv)
 
-    if intrinsic_rewards:
+    if intrinsic_reward:
         biv = buffer_from_example(examples["agent_info"].r_value, (1, B), agent_shared)
         agent_buffer = AgentSamplesIr(*agent_buffer, bootstrap_r_value=biv)
     observation = buffer_from_example(examples["observation"], (T, B), env_shared)

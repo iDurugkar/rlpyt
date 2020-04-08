@@ -1,7 +1,8 @@
 
-# import torch
+import torch
 from collections import namedtuple
 
+from rlpyt.utils.buffer import buffer_to, buffer_method
 from rlpyt.algos.base import RlAlgorithm
 from rlpyt.algos.utils import (discount_return, generalized_advantage_estimation,
     valid_from_done)
@@ -48,16 +49,16 @@ class PolicyGradientAlgo(RlAlgorithm):
             samples.agent.agent_info.value, samples.agent.bootstrap_value,)
         if intrinsic > 0.:
             obs, act = buffer_to((samples.env.observation, samples.agent.action), device=self.agent.device)
-            ireward = self.agent.r(obs,act)
+            ireward = self.agent.r(obs,act).cpu()
             reward += intrinsic * ireward
         done = done.type(reward.dtype)
 
         if self.gae_lambda == 1:  # GAE reduces to empirical discounted.
             return_ = discount_return(reward, done, bv, self.discount)
-            advantage = return_ - value
+            advantage = return_ - value.clone().detach()
         else:
             advantage, return_ = generalized_advantage_estimation(
-                reward, value, done, bv, self.discount, self.gae_lambda)
+                reward, value.clone().detach(), done, bv, self.discount, self.gae_lambda)
 
         if not self.mid_batch_reset or self.agent.recurrent:
             valid = valid_from_done(done)  # Recurrent: no reset during training.

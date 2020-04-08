@@ -26,6 +26,7 @@ class SerialSampler(BaseSampler):
             affinity=None,
             seed=None,
             bootstrap_value=False,
+            intrinsic_reward=False,
             traj_info_kwargs=None,
             rank=0,
             world_size=1,
@@ -47,7 +48,7 @@ class SerialSampler(BaseSampler):
             global_B=global_B, env_ranks=env_ranks)
         samples_pyt, samples_np, examples = build_samples_buffer(agent, envs[0],
             self.batch_spec, bootstrap_value, agent_shared=False,
-            env_shared=False, subprocess=False)
+            env_shared=False, subprocess=False, intrinsic_reward=intrinsic_reward)
         if traj_info_kwargs:
             for k, v in traj_info_kwargs.items():
                 setattr(self.TrajInfoCls, "_" + k, v)  # Avoid passing at init.
@@ -60,6 +61,7 @@ class SerialSampler(BaseSampler):
             agent=agent,
             global_B=global_B,
             env_ranks=env_ranks,  # Might get applied redundantly to agent.
+            accumulate_reward=self.accumulate_reward,
         )
         if self.eval_n_envs > 0:  # May do evaluation.
             eval_envs = [self.EnvCls(**self.eval_env_kwargs)

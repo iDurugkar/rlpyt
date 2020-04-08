@@ -78,6 +78,7 @@ class MinibatchRlBase(BaseRunner):
             affinity=self.affinity,
             seed=self.seed + 1,
             bootstrap_value=getattr(self.algo, "bootstrap_value", False),
+            intrinsic_reward=getattr(self.algo, "intrinsic_reward", False),
             traj_info_kwargs=self.get_traj_info_kwargs(),
             rank=rank,
             world_size=world_size,
