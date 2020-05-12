@@ -47,10 +47,13 @@ class PolicyGradientAlgo(RlAlgorithm):
         """
         reward, done, value, bv = (samples.env.reward, samples.env.done,
             samples.agent.agent_info.value, samples.agent.bootstrap_value,)
+        # reward = 2. - 10. * torch.abs(samples.env.observation[:, :, 1])
+        # reward = (1. - torch.abs(samples.env.observation)).sum(-1)
+        # print(samples.env.observation[:, :, 1])
         if intrinsic > 0.:
             obs, act = buffer_to((samples.env.observation, samples.agent.action), device=self.agent.device)
             ireward = self.agent.r(obs,act).cpu()
-            reward += intrinsic * ireward
+            reward = (1. - intrinsic) * reward + intrinsic * ireward
         done = done.type(reward.dtype)
 
         if self.gae_lambda == 1:  # GAE reduces to empirical discounted.

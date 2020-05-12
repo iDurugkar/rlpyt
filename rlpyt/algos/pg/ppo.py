@@ -163,7 +163,8 @@ class PPO_IM(PPO):
 
     def __init__(
             self,
-            discount=0.99,
+            discount=0.9,
+            ir_discount=0.99,
             learning_rate=3e-4,
             value_loss_coeff=0.5,
             entropy_loss_coeff=0.01,
@@ -180,6 +181,7 @@ class PPO_IM(PPO):
             ):
         """Saves input settings."""
         self.intrinsic_ratio = 1.  # 0.5
+        self.intrinsic_discount = ir_discount
         self.intrinsic_reward=True
         if optim_kwargs is None:
             optim_kwargs = dict()
@@ -216,11 +218,11 @@ class PPO_IM(PPO):
 
         with torch.no_grad():
             if self.gae_lambda == 1:  # GAE reduces to empirical discounted.
-                return_ = discount_return(reward, done, bv, self.discount)
+                return_ = discount_return(reward, done, bv, self.intrinsic_discount)
                 advantage = return_ - value
             else:
                 advantage, return_ = generalized_advantage_estimation(
-                    reward, value, done, bv, self.discount, self.gae_lambda)
+                    reward, value, done, bv, self.intrinsic_discount, self.gae_lambda)
 
         if not self.mid_batch_reset or self.agent.recurrent:
             valid = valid_from_done(done)  # Recurrent: no reset during training.

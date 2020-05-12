@@ -48,7 +48,8 @@ class IPRewardModel(torch.nn.Module):
 
         obs_flat = observation.view(T * B, -1)
         r_input = obs_flat  # torch.cat([obs_flat, a_flat], dim=1)
-        r = self.model(r_input).sum(-1)
+        r = self.model(r_input)
+        r = ((1. - torch.abs(obs_flat)) * r).sum(-1)
         r = restore_leading_dims(r, lead_dim, T, B)
         return r
 

@@ -8,7 +8,7 @@ from rlpyt.agents.base import AgentStep
 from rlpyt.models.pg.mujoco_ff_model import MujocoFfModel
 from rlpyt.models.pg.mujoco_lstm_model import MujocoLstmModel
 from rlpyt.utils.buffer import buffer_to, torchify_buffer
-from rlpyt.models.reward.mujoco_im_model import RewardFfModel
+from rlpyt.models.reward.mujoco_im_model import RewardFfModel, IPRewardModel
 from rlpyt.utils.quick_args import save__init__args
 from rlpyt.distributions.gaussian import Gaussian, DistInfoStd
 
@@ -59,6 +59,8 @@ class MujocoFfRewAgent(MujocoFfAgent):
                 global_B=global_B, env_ranks=env_ranks)
         self.r_model = self.RewardCls(**self.env_model_kwargs, **self.r_model_kwargs, rew_nonlinearity=torch.atan)
         self.rv_model = self.RewardCls(**self.env_model_kwargs, **self.r_model_kwargs)
+        # self.r_model.load_state_dict(torch.load('/scratch/cluster/ishand/reward/im_shaped_inverted_20/reward.pt'))
+        # self.rv_model.load_state_dict(torch.load('/scratch/cluster/ishand/reward/im_shaped_inverted_20/rvalue.pt'))
         self.temp_model = self.ModelCls(**self.env_model_kwargs, **self.model_kwargs)
         self.temp_distribution = Gaussian(
             dim=env_spaces.action.shape[0],
@@ -87,7 +89,7 @@ class MujocoFfRewAgent(MujocoFfAgent):
     def update_obs_rms(self, observation):
         super().update_obs_rms(observation)
         observation = buffer_to(observation, device=self.device)
-       #  self.r_model.update_obs_rms(observation)
+        self.r_model.update_obs_rms(observation)
 
     def r_val(self, observation, action):
         """compute value for external reward function"""
